@@ -31,7 +31,7 @@ enum {
 
 @implementation HelloWorldLayer
 
-const int treasureV_x = 100;
+const int treasureV_x = 50;
 const int minTreasureDes_X = 250;
 
 NSMutableArray * _treasures;
@@ -76,26 +76,16 @@ CGRect playerRect;
                                 player.contentSize.width,
                                 player.contentSize.height);
         
-        
-        
-        int minDuration =2.0;
-        int maxDuration =4.0;
-        int rangeDuration = maxDuration - minDuration;
-        int actualDuration = (arc4random() % rangeDuration) + minDuration;
+        int actualDuration = winSize.width/5.0/treasureV_x;
         
         // Create the actions
         id actionMove = [CCMoveTo actionWithDuration:actualDuration
-                                            position:ccp(winSize.width/2, winSize.height/2)];
-        
+                                            position:ccp(winSize.width/5, winSize.height/2)];
         
         id actionMoveDone = [CCCallFuncN actionWithTarget:self
                                                  selector:@selector(playerMoveFinished:)];
         
         [player runAction:[CCSequence actions:actionMove, actionMoveDone, nil]];
-        
-        
-        
-        
         
         [self addChild:player];
         
@@ -115,26 +105,38 @@ CGRect playerRect;
     //    [self removeChild:sprite cleanup:YES];
 }
 
+int GetRandom(int lowerbound, int upperbound){
+    return lowerbound + arc4random() % ( upperbound - lowerbound + 1 );
+}
+
+int GetRandomGaussian( int lowerbound, int upperbound ){
+    double u1 = (double)arc4random() / UINT32_MAX;
+    double u2 = (double)arc4random() / UINT32_MAX;
+    double f1 = sqrt(-2 * log(u1));
+    double f2 = 2 * M_PI * u2;
+    double g1 = f1 * cos(f2);
+    g1 = (g1+1)/2;
+    return lowerbound + g1 * ( upperbound - lowerbound + 1 );
+}
 
 -(void)addTreasure {
     
     CCSprite *treasure = [CCSprite spriteWithFile:@"Target.png"];
     
-    
-    
     // Determine where to spawn the target along the Y axis
     CGSize winSize = [[CCDirector sharedDirector] winSize];
     
-    treasure.position = ccp(winSize.width, winSize.height/2);
-    
     [self addChild:treasure];
     
+    int treasureStartY = GetRandom( treasure.contentSize.height/2, winSize.height - treasure.contentSize.height/2 );
+    int treasureDestinationY = GetRandomGaussian( treasureStartY-winSize.height/2, treasureStartY+winSize.height/2 );
+    int actualDuration = winSize.width /treasureV_x;
     
-    int actualDuration = 4;
+    treasure.position = ccp(winSize.width - treasure.contentSize.width/2, treasureStartY);
     
     // Create the actions
     id actionMove = [CCMoveTo actionWithDuration:actualDuration
-                                        position:ccp(0, winSize.height/2)];
+                                        position:ccp(0, treasureDestinationY)];
     
     
     id actionMoveDone = [CCCallFuncN actionWithTarget:self
@@ -144,44 +146,6 @@ CGRect playerRect;
     
     treasure.tag =1;
     [_treasures addObject:treasure];
-    
-    /*
-     int minX = treasure.contentSize.width/2;
-     int maxX = winSize.width - treasure.contentSize.width/2;
-     int rangeX = maxX - minX;
-     int actualX =  arc4random() % (rangeX - minTreasureDes_X);
-     int minY = treasure.contentSize.height/2;
-     int maxY = winSize.height - treasure.contentSize.height/2;
-     int rangeY = maxY - minY;
-     int actualY = (arc4random() % rangeY) + minY;
-     
-     
-     int random = arc4random() % 2;
-     int destinationY = 0;
-     if(random == 1)
-     destinationY = 0;
-     else
-     destinationY = winSize.height;
-     
-     
-     
-     treasure.position = ccp(winSize.width - treasure.contentSize.width/2,actualY);
-     
-     [self addChild:treasure];
-     
-     
-     int actualDuration = (winSize.width - actualX)/treasureV_x;
-     
-     // Create the actions
-     id actionMove = [CCMoveTo actionWithDuration:actualDuration
-     position:ccp(actualX, destinationY)];
-     id actionMoveDone = [CCCallFuncN actionWithTarget:self
-     selector:@selector(treasureMoveFinished:)];
-     [treasure runAction:[CCSequence actions:actionMove, actionMoveDone, nil]];
-     
-     treasure.tag =1;
-     [_treasures addObject:treasure];
-     */
 }
 
 -(void)treasureMoveFinished:(id)sender {
